@@ -139,7 +139,7 @@ async function triggerReconnect() {
       <p style="margin-top: 12px; color: #9CA3AF;">Generating fresh QR code...</p>
     `;
 
-    const res = await fetch(`${API_BASE_URL}/api/reconnect', { method: 'POST' });
+    const res = await fetch(`${API_BASE_URL}/api/reconnect`, { method: 'POST' });
     const data = await res.json();
     updateStatusUI(data);
     return data;
@@ -151,7 +151,7 @@ async function triggerReconnect() {
 // Fetch WhatsApp Connection Status
 async function fetchWhatsAppStatus() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/status');
+    const res = await fetch(`${API_BASE_URL}/api/status`);
     const data = await res.json();
     updateStatusUI(data);
     return data;
@@ -198,12 +198,10 @@ function updateStatusUI(data) {
   }
 }
 
-
-
 // Fetch Orders
 async function fetchOrders() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/orders');
+    const res = await fetch(`${API_BASE_URL}/api/orders`);
     ordersData = await res.json();
     updateBadgeCounts();
     renderOrders();
@@ -309,7 +307,7 @@ function renderOrders() {
 // Update Order Status API Call
 async function updateOrderStatus(orderId, newStatus) {
   try {
-    const res = await fetch(`/api/orders/${orderId}/status`, {
+    const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
@@ -330,7 +328,7 @@ async function openChatModal(orderId) {
     chatLogsBox.innerHTML = `<div class="spinner"></div>`;
     chatModal.classList.add('active');
 
-    const res = await fetch(`/api/orders/${orderId}/chat`);
+    const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}/chat`);
     const logs = await res.json();
 
     if (logs.length === 0) {
@@ -352,13 +350,66 @@ async function openChatModal(orderId) {
 // Fetch Products
 async function fetchProducts() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/products');
+    const res = await fetch(`${API_BASE_URL}/api/products`);
     productsData = await res.json();
     renderProducts();
   } catch (err) {
     console.error('Failed to fetch products:', err);
   }
 }
+
+// Save Product
+async function saveProduct() {
+  const id = document.getElementById('prodId').value;
+  const name = document.getElementById('prodName').value;
+  const category = document.getElementById('prodCategory').value;
+  const base_price = parseFloat(document.getElementById('prodPrice').value);
+  const description = document.getElementById('prodDesc').value;
+  const varText = document.getElementById('prodVariations').value;
+
+  let variations = [];
+  if (varText.trim().length > 0) {
+    try {
+      variations = JSON.parse(varText);
+    } catch (e) {
+      alert('Invalid JSON syntax in Variations field.');
+      return;
+    }
+  }
+
+  const payload = { name, category, base_price, description, variations, available: 1 };
+
+  try {
+    const url = id ? `${API_BASE_URL}/api/products/${id}` : `${API_BASE_URL}/api/products`;
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      productModal.classList.remove('active');
+      await fetchProducts();
+    } else {
+      alert('Failed to save product');
+    }
+  } catch (err) {
+    console.error('Error saving product:', err);
+  }
+}
+
+// Delete Product
+async function deleteProduct(id) {
+  if (!confirm('Are you sure you want to delete this menu item?')) return;
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/${id}`, { method: 'DELETE' });
+    if (res.ok) fetchProducts();
+  } catch (err) {
+    console.error('Error deleting product:', err);
+  }
+}
+
 
 // Render Products
 function renderProducts() {
