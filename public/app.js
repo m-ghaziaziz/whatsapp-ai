@@ -73,21 +73,31 @@ function setupNavigation() {
   });
 }
 
+let qrPollTimer = null;
+
 // Event Listeners
 function setupEventListeners() {
   btnOpenQrModal.addEventListener('click', async () => {
     qrModal.classList.add('active');
-    // If disconnected, trigger a fresh session restart to generate new QR immediately
-    const res = await fetch('/api/status');
-    const data = await res.json();
-    if (data.status !== 'connected' && data.status !== 'qr_ready') {
+    
+    // Fast poll every 1s while modal is open to capture QR instantly
+    if (qrPollTimer) clearInterval(qrPollTimer);
+    qrPollTimer = setInterval(fetchWhatsAppStatus, 1000);
+
+    const data = await fetchWhatsAppStatus();
+    if (data && data.status === 'disconnected') {
       await triggerReconnect();
-    } else {
-      updateStatusUI(data);
     }
   });
 
-  btnCloseQrModal.addEventListener('click', () => qrModal.classList.remove('active'));
+  btnCloseQrModal.addEventListener('click', () => {
+    qrModal.classList.remove('active');
+    if (qrPollTimer) {
+      clearInterval(qrPollTimer);
+      qrPollTimer = null;
+    }
+  });
+
   btnCloseChatModal.addEventListener('click', () => chatModal.classList.remove('active'));
 
   btnAddProduct.addEventListener('click', () => {
@@ -126,6 +136,7 @@ async function triggerReconnect() {
     const res = await fetch('/api/reconnect', { method: 'POST' });
     const data = await res.json();
     updateStatusUI(data);
+    return data;
   } catch (err) {
     console.error('Failed to reconnect session:', err);
   }
@@ -137,12 +148,14 @@ async function fetchWhatsAppStatus() {
     const res = await fetch('/api/status');
     const data = await res.json();
     updateStatusUI(data);
+    return data;
   } catch (err) {
     console.error('Failed to fetch status:', err);
   }
 }
 
 function updateStatusUI(data) {
+  if (!data) return;
   if (data.currency) storeCurrency = data.currency;
 
   if (data.status === 'connected') {
@@ -159,6 +172,14 @@ function updateStatusUI(data) {
     statusText.textContent = 'Action Required';
     statusDesc.textContent = 'Scan QR Code to pair WhatsApp.';
     qrBox.innerHTML = `<img src="${data.qr}" alt="WhatsApp QR Code">`;
+  } else if (data.status === 'connecting') {
+    statusDot.className = 'status-indicator-dot disconnected';
+    statusText.textContent = 'Connecting...';
+    statusDesc.textContent = 'Initializing WhatsApp Web...';
+    qrBox.innerHTML = `
+      <div class="spinner"></div>
+      <p style="margin-top: 12px; color: #9CA3AF;">Generating QR code... Please wait a few seconds.</p>
+    `;
   } else {
     statusDot.className = 'status-indicator-dot disconnected';
     statusText.textContent = 'Disconnected';
@@ -170,6 +191,7 @@ function updateStatusUI(data) {
     `;
   }
 }
+
 
 
 // Fetch Orders
