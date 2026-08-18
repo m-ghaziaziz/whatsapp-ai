@@ -4,6 +4,12 @@ let ordersData = [];
 let productsData = [];
 let storeCurrency = '$';
 
+// Backend API Base URL configuration (Supports Render/Railway/Heroku production backends or relative / API)
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''
+  : (window.BACKEND_URL || 'http://localhost:3000');
+
+
 // DOM Elements
 const statusDot = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
@@ -133,7 +139,7 @@ async function triggerReconnect() {
       <p style="margin-top: 12px; color: #9CA3AF;">Generating fresh QR code...</p>
     `;
 
-    const res = await fetch('/api/reconnect', { method: 'POST' });
+    const res = await fetch(`${API_BASE_URL}/api/reconnect', { method: 'POST' });
     const data = await res.json();
     updateStatusUI(data);
     return data;
@@ -145,7 +151,7 @@ async function triggerReconnect() {
 // Fetch WhatsApp Connection Status
 async function fetchWhatsAppStatus() {
   try {
-    const res = await fetch('/api/status');
+    const res = await fetch(`${API_BASE_URL}/api/status');
     const data = await res.json();
     updateStatusUI(data);
     return data;
@@ -197,7 +203,7 @@ function updateStatusUI(data) {
 // Fetch Orders
 async function fetchOrders() {
   try {
-    const res = await fetch('/api/orders');
+    const res = await fetch(`${API_BASE_URL}/api/orders');
     ordersData = await res.json();
     updateBadgeCounts();
     renderOrders();
@@ -346,7 +352,7 @@ async function openChatModal(orderId) {
 // Fetch Products
 async function fetchProducts() {
   try {
-    const res = await fetch('/api/products');
+    const res = await fetch(`${API_BASE_URL}/api/products');
     productsData = await res.json();
     renderProducts();
   } catch (err) {
