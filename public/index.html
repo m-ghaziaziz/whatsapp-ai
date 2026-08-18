@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gourmet Express - WhatsApp AI Automation Hub</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Remixicon Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="ri-whatsapp-fill"></i>
+        </div>
+        <div class="brand-text">
+          <h2>Gourmet Express</h2>
+          <span>AI Order Automation</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="orders">
+          <i class="ri-shopping-bag-3-line"></i>
+          <span>Live Orders</span>
+          <span class="badge" id="pendingBadge">0</span>
+        </button>
+        <button class="nav-item" data-tab="products">
+          <i class="ri-restaurant-2-line"></i>
+          <span>Menu & Variations</span>
+        </button>
+        <button class="nav-item" data-tab="feedbacks">
+          <i class="ri-star-smile-line"></i>
+          <span>Customer Feedback</span>
+        </button>
+      </nav>
+
+      <div class="whatsapp-status-card">
+        <div class="status-header">
+          <div class="status-indicator-dot" id="statusDot"></div>
+          <span class="status-title" id="statusText">Checking WhatsApp...</span>
+        </div>
+        <p class="status-desc" id="statusDesc">Scan QR code to pair WhatsApp account.</p>
+        <button class="btn-qr-scan" id="btnOpenQrModal">
+          <i class="ri-qr-code-line"></i> Pair WhatsApp QR
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1 id="pageTitle">Live Order Command Center</h1>
+          <p id="pageSubtitle">Manage incoming customer WhatsApp orders in real-time</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-primary" id="btnRefresh">
+            <i class="ri-refresh-line"></i> Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: Live Orders View -->
+      <section class="tab-content active" id="tab-orders">
+        <!-- Status Filter Tabs -->
+        <div class="filter-pills">
+          <button class="filter-pill active" data-filter="all">All Orders</button>
+          <button class="filter-pill" data-filter="pending">⏳ Pending (<span id="cnt-pending">0</span>)</button>
+          <button class="filter-pill" data-filter="confirmed">✅ Confirmed (<span id="cnt-confirmed">0</span>)</button>
+          <button class="filter-pill" data-filter="preparing">👨‍🍳 Preparing (<span id="cnt-preparing">0</span>)</button>
+          <button class="filter-pill" data-filter="out_for_delivery">🛵 Out for Delivery (<span id="cnt-out">0</span>)</button>
+          <button class="filter-pill" data-filter="delivered">🎉 Delivered (<span id="cnt-delivered">0</span>)</button>
+        </div>
+
+        <!-- Orders Grid / Board -->
+        <div class="orders-grid" id="ordersContainer">
+          <!-- Dynamically populated order cards -->
+        </div>
+      </section>
+
+      <!-- TAB 2: Menu & Variations View -->
+      <section class="tab-content" id="tab-products">
+        <div class="section-header">
+          <h2>Menu Catalog & Item Variations</h2>
+          <button class="btn-accent" id="btnAddProduct">
+            <i class="ri-add-line"></i> Add New Product
+          </button>
+        </div>
+        <div class="products-grid" id="productsContainer">
+          <!-- Dynamically populated products -->
+        </div>
+      </section>
+
+      <!-- TAB 3: Feedbacks View -->
+      <section class="tab-content" id="tab-feedbacks">
+        <div class="section-header">
+          <h2>Customer Delivery Feedbacks & Ratings</h2>
+        </div>
+        <div class="feedbacks-grid" id="feedbacksContainer">
+          <!-- Dynamically populated feedback cards -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL 1: WhatsApp QR Scanner Modal -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>WhatsApp Device Pairing</h3>
+        <button class="modal-close" id="btnCloseQrModal">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="qr-container" id="qrBox">
+          <div class="spinner"></div>
+          <p>Generating QR Code...</p>
+        </div>
+        <div class="qr-instructions">
+          <ol>
+            <li>Open <strong>WhatsApp</strong> on your mobile phone.</li>
+            <li>Tap <strong>Menu (⋮)</strong> or <strong>Settings (⚙️)</strong>.</li>
+            <li>Select <strong>Linked Devices</strong> &gt; <strong>Link a Device</strong>.</li>
+            <li>Point your phone camera at this QR code to scan.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Customer Chat Logs Modal -->
+  <div class="modal-overlay" id="chatModal">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <h3>WhatsApp AI Conversation Transcript</h3>
+        <button class="modal-close" id="btnCloseChatModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="chat-logs-container" id="chatLogsBox">
+          <!-- Chat messages render here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Product Form Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Add Menu Product</h3>
+        <button class="modal-close" id="btnCloseProductModal">&times;</button>
+      </div>
+      <form id="productForm" class="modal-body">
+        <input type="hidden" id="prodId">
+        <div class="form-group">
+          <label>Product Name</label>
+          <input type="text" id="prodName" required placeholder="e.g. Italian Truffle Pizza">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="prodCategory" required placeholder="e.g. Pizzas, Drinks">
+          </div>
+          <div class="form-group">
+            <label>Base Price ($)</label>
+            <input type="number" step="0.01" id="prodPrice" required placeholder="12.99">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="prodDesc" rows="2" placeholder="Delicious ingredients description..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Variations (JSON Format)</label>
+          <textarea id="prodVariations" rows="5" placeholder='[{"group":"Size","options":[{"name":"Small","priceDelta":0},{"name":"Large","priceDelta":4.50}]}]'></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btnCancelProductModal">Cancel</button>
+          <button type="submit" class="btn-accent">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
